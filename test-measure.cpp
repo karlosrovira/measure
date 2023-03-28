@@ -1,224 +1,119 @@
+#include "measure.cpp"
 #include "measure.hpp"
 
 #include <gtest/gtest.h>
 
-using measurement::measure;
+using namespace measure;
 
-constexpr auto METER = measure<float>::METER;
-constexpr auto INCH = measure<float>::INCH;
-
-constexpr auto SECOND = measure<float>::SECOND;
-constexpr auto MINUTE = measure<float>::MINUTE;
-
-constexpr auto GRAM = measure<float>::GRAM;
-constexpr auto POUND = measure<float>::POUND;
-
-constexpr auto NONE = measure<float>::NONE;
-constexpr auto KILO = measure<float>::KILO;
-
-TEST(measure, ConstructorBase)
+void test_range(double tested, double other)
 {
-  measure<float> tested;
+  EXPECT_TRUE(tested <= other + tested / 2000 and other - tested / 2000 <= tested) << "Got: " << tested;
 }
 
-TEST(measure, value)
+TEST(measure, convert_from0)
 {
-  measure<float> tested;
-  EXPECT_EQ(tested.value(), 0.0);
+  EXPECT_EQ(convert_from(10.0, unit{}), 10.0);
 }
 
-// Access
-
-TEST(measure, value_10)
+TEST(measure, convert_from_kg)
 {
-  measure<float> tested(10.0);
-  EXPECT_EQ(tested.value(), 10.0);
+  unit u;
+  u.mass_power = 1;
+  u.mass_modifier = KILO;
+  EXPECT_EQ(convert_from(10.0, u), 10.0e3);
 }
 
-// distance
-TEST(measure, distance_power)
+TEST(measure, convert_from_kg2)
 {
-  measure<float> tested;
-  EXPECT_EQ(tested.distance_power(), 0);
+  unit u;
+  u.mass_power = 2;
+  u.mass_modifier = KILO;
+  EXPECT_EQ(convert_from(10.0, u), 10.0e6);
 }
 
-TEST(measure, distance_modifier)
+TEST(measure, convert_from_mm)
 {
-  measure<float> tested;
-  EXPECT_EQ(tested.distance_modifier(), NONE);
+  unit u;
+  u.distance_power = 1;
+  u.distance_modifier = MILLI;
+  EXPECT_EQ(convert_from(10.0, u), 10.0e-3);
 }
 
-TEST(measure, distance_unit)
+TEST(measure, convert_from_inch)
 {
-  measure<float> tested;
-  EXPECT_EQ(tested.distance_unit(), METER);
+  unit u;
+  u.distance_power = 1;
+  u.distance_unit = INCH;
+  EXPECT_EQ(convert_from(10.0, u), 10.0 / INCHES_PER_METER);
 }
 
-// mass
-TEST(measure, mass_power)
+TEST(measure, convert_from_inch2)
 {
-  measure<float> tested;
-  EXPECT_EQ(tested.mass_power(), 0);
+  unit u;
+  u.distance_power = 2;
+  u.distance_unit = INCH;
+  test_range(convert_from(10.0, u), 10.0 / (INCHES_PER_METER * INCHES_PER_METER));
 }
 
-TEST(measure, mass_modifier)
+TEST(measure, convert_from_pound)
 {
-  measure<float> tested;
-  EXPECT_EQ(tested.mass_modifier(), NONE);
+  unit u;
+  u.mass_power = 1;
+  u.mass_unit = POUND;
+  test_range(convert_from(10.0, u), 10.0 * GRAMS_PER_POUND);
 }
 
-TEST(measure, mass_unit)
+TEST(measure, convert_from_pound2)
 {
-  measure<float> tested;
-  EXPECT_EQ(tested.mass_unit(), GRAM);
+  unit u;
+  u.mass_power = 2;
+  u.mass_unit = POUND;
+  test_range(convert_from(10.0, u), 10.0 * (GRAMS_PER_POUND * GRAMS_PER_POUND));
 }
 
-// time
-TEST(measure, time_power)
+TEST(measure, convert_from_minute)
 {
-  measure<float> tested;
-  EXPECT_EQ(tested.time_power(), 0);
+  unit u;
+  u.time_power = 1;
+  u.time_unit = MINUTE;
+  test_range(convert_from(10.0, u), 10.0 * SECONDS_PER_MINUTE);
 }
 
-TEST(measure, time_modifier)
+TEST(measure, convert_from_second_2)
 {
-  measure<float> tested;
-  EXPECT_EQ(tested.time_modifier(), NONE);
+  unit u;
+  u.time_power = -2;
+  test_range(convert_from(10.0, u), 10.0);
 }
 
-TEST(measure, time_unit)
+TEST(measure, convert_from_newton)
 {
-  measure<float> tested;
-  EXPECT_EQ(tested.time_unit(), SECOND);
+  unit u;
+
+  u.mass_modifier = KILO;
+  //u.mass_unit = GRAM;
+  u.mass_power = 1;
+  //u.distance_modifier = NONE;
+  //u.distance_unit = METER;
+  u.distance_power = 1;
+  //u.time_modifier = NONE;
+  //u.time_unit = SECOND;
+  u.time_power = -2;
+
+  test_range(convert_from(10.0, u), 10.0e3);
 }
 
-// Setters
-
-TEST(measure, set_value)
+TEST(measure, to_string)
 {
-  measure<float> tested;
-  tested.set_value(10.0);
-  EXPECT_EQ(tested.value(), 10.0);
-}
+  unit u;
+  measure_t m;
+  
+  u.mass_modifier = KILO;
+  u.mass_power = 1;
+  u.distance_power = 1;
+  u.time_power = -2;
 
-// distance 
-TEST(measure, set_distance_unit)
-{
-  measure<float> tested;
-  tested.set_distance_unit(INCH);
-  EXPECT_EQ(tested.distance_unit(), INCH);
-}
-
-TEST(measure, set_distance_modifier)
-{
-  measure<float> tested;
-  tested.set_distance_modifier(KILO);
-  EXPECT_EQ(tested.distance_modifier(), KILO);
-}
-
-TEST(measure, set_distance_power)
-{
-  measure<float> tested;
-  tested.set_distance_power(2);
-  EXPECT_EQ(tested.distance_power(), 2);
-}
-
-// mass 
-TEST(measure, set_mass_unit)
-{
-  measure<float> tested;
-  tested.set_mass_unit(POUND);
-  EXPECT_EQ(tested.mass_unit(), POUND);
-}
-
-TEST(measure, set_mass_modifier)
-{
-  measure<float> tested;
-  tested.set_mass_modifier(KILO);
-  EXPECT_EQ(tested.mass_modifier(), KILO);
-}
-
-TEST(measure, set_mass_power)
-{
-  measure<float> tested;
-  tested.set_mass_power(2);
-  EXPECT_EQ(tested.mass_power(), 2);
-}
-
-// time 
-TEST(measure, set_time_unit)
-{
-  measure<float> tested;
-  tested.set_time_unit(MINUTE);
-  EXPECT_EQ(tested.time_unit(), MINUTE);
-}
-
-TEST(measure, set_time_modifier)
-{
-  measure<float> tested;
-  tested.set_time_modifier(KILO);
-  EXPECT_EQ(tested.time_modifier(), KILO);
-}
-
-TEST(measure, set_time_power)
-{
-  measure<float> tested;
-  tested.set_time_power(2);
-  EXPECT_EQ(tested.time_power(), 2);
-}
-
-// convert 
-TEST(measure, convert_distance_modifier)
-{
-  measure<float> tested(10.0);
-  tested.convert_distance_modifier(KILO);
-  EXPECT_EQ(tested.distance_modifier(), KILO);
-  //EXPECT_EQ(tested.value(), 0.01); fails for some reason
-  EXPECT_TRUE(tested.value() <= 0.01 and tested.value() >= 0.00999);
-}
-
-TEST(measure, convert_mass_modifier)
-{
-  measure<float> tested(10.0);
-  tested.convert_mass_modifier(KILO);
-  EXPECT_EQ(tested.mass_modifier(), KILO);
-  //EXPECT_EQ(tested.value(), 0.01); fails for some reason
-  EXPECT_TRUE(tested.value() <= 0.01 and tested.value() >= 0.00999);
-}
-
-TEST(measure, convert_time_modifier)
-{
-  measure<float> tested(10.0);
-  tested.convert_time_modifier(KILO);
-  EXPECT_EQ(tested.time_modifier(), KILO);
-  //EXPECT_EQ(tested.value(), 0.01); fails for some reason
-  EXPECT_TRUE(tested.value() <= 0.01 and tested.value() >= 0.00999);
-}
-
-TEST(measure, Sum)
-{
-  measure<float> left, right, result;
-  left.set_mass_power(1);
-  left.set_value(100.0);	// 100.0g
-  right.set_mass_power(1);
-  right.set_value(10.0);
-  right.set_mass_modifier(KILO); // 10.0kg
-  result = left + right;
-  EXPECT_EQ(result.value(), 10100.0);
-  EXPECT_EQ(result.mass_power(), 1);
-  EXPECT_EQ(result.mass_modifier(), NONE);
-}
-
-TEST(measure, Take)
-{
-  measure<float> left, right, result;
-  left.set_mass_power(1);
-  left.set_value(100.0);	// 100.0g
-  right.set_mass_power(1);
-  right.set_value(10.0);
-  right.set_mass_modifier(KILO); // 10.0kg
-  result = left - right;
-  EXPECT_EQ(result.value(), -9900.0);
-  EXPECT_EQ(result.mass_power(), 1);
-  EXPECT_EQ(result.mass_modifier(), NONE);
+  m = convert_from(123.4, u);
+  
+  EXPECT_EQ(to_string(m, u), "123.400000_kg.m.s-2");
 }

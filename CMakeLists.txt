@@ -12,6 +12,8 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
+add_library(measure measure.cpp)
+
 add_executable(test-measure test-measure.cpp)
 target_link_libraries(test-measure GTest::gtest_main)
 
